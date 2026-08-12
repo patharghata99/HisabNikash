@@ -325,8 +325,11 @@
 
   /* Profile */
   .profile-head{display:flex;flex-direction:column;align-items:center;gap:10px;margin-bottom:18px}
+  .profile-avatar-wrap{position:relative;width:78px;height:78px;cursor:pointer}
   .profile-avatar{width:78px;height:78px;border-radius:50%;background:var(--surface2);border:2px solid var(--income);overflow:hidden;display:flex;align-items:center;justify-content:center;color:var(--income)}
   .profile-avatar img{width:100%;height:100%;object-fit:cover}
+  .avatar-edit-badge{position:absolute;bottom:-2px;right:-2px;width:26px;height:26px;border-radius:50%;background:var(--income);color:#000;display:flex;align-items:center;justify-content:center;border:2px solid var(--surface);pointer-events:none}
+  .avatar-edit-badge svg{width:13px;height:13px}
   .profile-name{font-size:17px;font-weight:700}
   .profile-email{font-size:12px;color:var(--text2)}
   .profile-stat{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px}
@@ -636,28 +639,24 @@
       <div class="sum-card-title">মোট আয়</div>
       <div class="sum-card-amount" id="total-income">৳0</div>
       <div class="sum-card-sub" id="income-sources">কোনো উৎস নেই</div>
-      <div class="sum-card-tap">বিস্তারিত দেখতে ট্যাপ করুন →</div>
     </div>
     <div class="sum-card expense" role="button" tabindex="0" onclick="openTypeDetail('expense')">
       <div class="sum-card-icon"><svg class="icon"><use href="#i-trending-down"/></svg></div>
       <div class="sum-card-title">মোট ব্যয়</div>
       <div class="sum-card-amount" id="total-expense">৳0</div>
       <div class="sum-card-sub" id="expense-sources">কোনো ব্যয় নেই</div>
-      <div class="sum-card-tap">বিস্তারিত দেখতে ট্যাপ করুন →</div>
     </div>
     <div class="sum-card debt" role="button" tabindex="0" onclick="openTypeDetail('debt')">
       <div class="sum-card-icon"><svg class="icon"><use href="#i-handshake"/></svg></div>
       <div class="sum-card-title">দেনা</div>
       <div class="sum-card-amount" id="total-debt">৳0</div>
       <div class="sum-card-sub" id="debt-sources">কাউকে দেনা নেই</div>
-      <div class="sum-card-tap">বিস্তারিত দেখতে ট্যাপ করুন →</div>
     </div>
     <div class="sum-card due" role="button" tabindex="0" onclick="openTypeDetail('due')">
       <div class="sum-card-icon"><svg class="icon"><use href="#i-wallet"/></svg></div>
       <div class="sum-card-title">পাওনা</div>
       <div class="sum-card-amount" id="total-due">৳0</div>
       <div class="sum-card-sub" id="due-sources">কারো কাছে পাওনা নেই</div>
-      <div class="sum-card-tap">বিস্তারিত দেখতে ট্যাপ করুন →</div>
     </div>
   </div>
 
@@ -821,7 +820,7 @@
     <div class="cat-group">
       <div class="cat-group-title">অ্যাকাউন্ট</div>
       <div class="cat-item" onclick="openProfile()" style="cursor:pointer">
-        <div class="profile-avatar" id="settings-avatar" style="width:42px;height:42px;border-width:1px"><svg class="icon"><use href="#i-user"/></svg></div>
+        <div class="profile-avatar" id="settings-avatar" style="width:42px;height:42px;border-width:1px" onclick="event.stopPropagation();pickProfilePhoto()" title="ছবি পরিবর্তন করুন"><svg class="icon"><use href="#i-user"/></svg></div>
         <div class="cat-info">
           <div class="cat-name" id="settings-name">গেস্ট ইউজার</div>
           <div class="cat-count" id="settings-email">লগইন করতে চাপুন</div>
@@ -831,21 +830,8 @@
     </div>
     <div class="cat-group">
       <div class="cat-group-title">ডাটা ম্যানেজমেন্ট</div>
-      <button class="add-cat-btn" onclick="exportJSON()" style="color:var(--text);margin-bottom:8px"><svg class="icon icon-sm"><use href="#i-cloud"/></svg> ডাটা এক্সপোর্ট (JSON)</button>
-      <button class="add-cat-btn" onclick="document.getElementById('import-file').click()" style="color:var(--text);margin-bottom:8px"><svg class="icon icon-sm"><use href="#i-cloud"/></svg> ডাটা ইম্পোর্ট</button>
       <input type="file" id="import-file" accept=".json" style="display:none" onchange="importJSON(event)">
       <button class="add-cat-btn btn-danger" onclick="clearAll()"><svg class="icon icon-sm"><use href="#i-trash"/></svg> সব ডাটা মুছে ফেলুন</button>
-    </div>
-    <div class="cat-group">
-      <div class="cat-group-title">তথ্য</div>
-      <div class="cat-item">
-        <svg class="icon" style="color:var(--income)"><use href="#i-cloud"/></svg>
-        <div class="cat-info"><div class="cat-name">ক্লাউড সিঙ্ক</div><div class="cat-count" id="settings-sync">অফলাইন মোড</div></div>
-      </div>
-      <div class="cat-item">
-        <svg class="icon" style="color:var(--due)"><use href="#i-settings"/></svg>
-        <div class="cat-info"><div class="cat-name">ভার্সন</div><div class="cat-count">v1.0.0</div></div>
-      </div>
     </div>
   </div>
 </div>
@@ -1064,6 +1050,9 @@
         <label class="form-label">পাসওয়ার্ড</label>
         <input class="form-input" type="password" id="a-pass" placeholder="••••••••" autocomplete="current-password">
       </div>
+      <div id="forgot-pass-wrap" style="text-align:right;margin:-8px 0 14px">
+        <span onclick="doForgotPassword()" style="font-size:12px;color:var(--income);cursor:pointer">পাসওয়ার্ড ভুলে গেছেন?</span>
+      </div>
       <button class="submit-btn" id="auth-submit" onclick="doEmailAuth()"><svg class="icon icon-sm"><use href="#i-mail"/></svg> লগইন করুন</button>
       <div class="divider">অথবা</div>
       <button class="btn-ghost" onclick="doGoogleAuth()"><svg class="icon icon-sm" style="stroke:none"><use href="#i-google"/></svg> Google দিয়ে লগইন</button>
@@ -1073,7 +1062,11 @@
     <div id="profile-view" style="display:none">
       <div class="modal-title">প্রোফাইল</div>
       <div class="profile-head">
-        <div class="profile-avatar" id="profile-avatar"><svg class="icon icon-lg"><use href="#i-user"/></svg></div>
+        <div class="profile-avatar-wrap" onclick="pickProfilePhoto()" title="ছবি পরিবর্তন করুন">
+          <div class="profile-avatar" id="profile-avatar"><svg class="icon icon-lg"><use href="#i-user"/></svg></div>
+          <div class="avatar-edit-badge"><svg class="icon icon-sm"><use href="#i-edit"/></svg></div>
+        </div>
+        <input type="file" id="profile-photo-input" accept="image/*" style="display:none" onchange="onProfilePhotoPick(event)">
         <div class="profile-name" id="profile-name">—</div>
         <div class="profile-email" id="profile-email">—</div>
       </div>
@@ -1138,7 +1131,7 @@
   import {
     getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult,
     createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile,
-    onAuthStateChanged, signOut
+    onAuthStateChanged, signOut, sendPasswordResetEmail
   } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-auth.js";
   import {
     getFirestore, doc, setDoc, getDoc, getDocs, addDoc, updateDoc, deleteDoc,
@@ -1178,6 +1171,7 @@
     auth, db, googleProvider, firebaseReady,
     signInWithPopup, signInWithRedirect, getRedirectResult,
     createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile, signOut,
+    sendPasswordResetEmail,
     doc, setDoc, getDoc, getDocs, addDoc, updateDoc, deleteDoc,
     collection, query, orderBy, onSnapshot, serverTimestamp, writeBatch
   };
@@ -1227,6 +1221,11 @@ const $ = id => document.getElementById(id);
 const fmt = n => '৳' + Math.abs(Number(n)||0).toLocaleString('en-IN');
 const esc = s => String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const nowTime = () => new Date().toTimeString().slice(0,5);
+
+/* ---------- প্রোফাইল ছবি (গেস্ট ও লগইন উভয় ক্ষেত্রে) ---------- */
+let localProfilePhoto=null;
+try{ localProfilePhoto=localStorage.getItem('hisabnikash_profile_photo')||null; }catch(e){}
+function getProfilePhoto(){ return localProfilePhoto || (state.user&&state.user.photoURL) || null; }
 
 /* ---------- Toast ---------- */
 function showToast(msg, isErr=false){
@@ -1830,6 +1829,37 @@ function personByName(name){
   return state.persons.find(p=>(p.name||'').trim().toLowerCase()===n)||null;
 }
 window.addPhotoForName=addPhotoForName;
+
+/* ---------- ইউজার প্রোফাইল ছবি (গেস্ট/লগইন উভয়ে কাজ করে) ---------- */
+function pickProfilePhoto(){
+  const inp=$('profile-photo-input')||(()=>{
+    const i=document.createElement('input');
+    i.type='file'; i.accept='image/*'; i.id='profile-photo-input'; i.style.display='none';
+    i.onchange=(e)=>onProfilePhotoPick(e);
+    document.body.appendChild(i);
+    return i;
+  })();
+  inp.click();
+}
+async function onProfilePhotoPick(ev){
+  const f=ev.target.files&&ev.target.files[0]; ev.target.value='';
+  if(!f) return;
+  try{
+    const data=await readImageCompressed(f);
+    localProfilePhoto=data;
+    try{ localStorage.setItem('hisabnikash_profile_photo',data); }catch(e){}
+    updateHeaderAvatar(); updateSettings();
+    if($('profile-view').style.display!=='none') $('profile-avatar').innerHTML=`<img src="${data}" alt="">`;
+    showToast('প্রোফাইল ছবি যোগ হয়েছে ✓');
+    if(state.user&&window.__fb&&window.__fb.firebaseReady){
+      try{
+        const fb=window.__fb;
+        await fb.setDoc(fb.doc(fb.db,'users',state.user.uid),{photoData:data,updatedAt:fb.serverTimestamp()},{merge:true});
+      }catch(e){ console.error(e); }
+    }
+  }catch(e){ showToast('ছবি পড়া যায়নি',true); }
+}
+window.pickProfilePhoto=pickProfilePhoto; window.onProfilePhotoPick=onProfilePhotoPick;
 
 function getPersonTransactions(personId){
   const person=state.persons.find(p=>p.id===personId);
@@ -2916,7 +2946,8 @@ function showProfileView(){
   $('profile-name').textContent=u.displayName||u.email||'ইউজার';
   $('profile-email').textContent=u.email||'';
   const av=$('profile-avatar');
-  av.innerHTML=u.photoURL?`<img src="${u.photoURL}" alt="">`:`<svg class="icon icon-lg"><use href="#i-user"/></svg>`;
+  const photo=getProfilePhoto();
+  av.innerHTML=photo?`<img src="${photo}" alt="">`:`<svg class="icon icon-lg"><use href="#i-user"/></svg>`;
   const {totals}=getStats();
   $('ps-trans').textContent=state.transactions.length;
   $('ps-balance').textContent=fmt(totals.income-totals.expense);
@@ -2928,6 +2959,7 @@ function setAuthTab(t){
   $('tab-login').classList.toggle('active',t==='login');
   $('tab-signup').classList.toggle('active',t==='signup');
   $('name-group').style.display=t==='signup'?'block':'none';
+  $('forgot-pass-wrap').style.display=t==='signup'?'none':'block';
   $('auth-submit').innerHTML=t==='signup'
     ? '<svg class="icon icon-sm"><use href="#i-user"/></svg> সাইনআপ করুন'
     : '<svg class="icon icon-sm"><use href="#i-mail"/></svg> লগইন করুন';
@@ -2970,6 +3002,17 @@ async function doGoogleAuth(){
     } else setAuthMsg(humanErr(e.code||e.message));
   }
 }
+async function doForgotPassword(){
+  if(!window.__fb||!window.__fb.firebaseReady){setAuthMsg('Firebase config যোগ করা হয়নি।');return}
+  const email=$('a-email').value.trim();
+  if(!email){setAuthMsg('আগে ইমেইল লিখুন, তারপর "পাসওয়ার্ড ভুলে গেছেন?" চাপুন');return}
+  try{
+    await window.__fb.sendPasswordResetEmail(window.__fb.auth,email);
+    setAuthMsg('রিসেট লিংক '+email+' এ পাঠানো হয়েছে — ইনবক্স চেক করুন',true);
+    showToast('পাসওয়ার্ড রিসেট ইমেইল পাঠানো হয়েছে ✓');
+  }catch(e){setAuthMsg(humanErr(e.code||e.message))}
+}
+window.doForgotPassword=doForgotPassword;
 async function doLogout(){
   try{
     if(window.__fb&&window.__fb.firebaseReady) await window.__fb.signOut(window.__fb.auth);
@@ -3014,6 +3057,11 @@ window.__onAuthChange = async (user) => {
         if(Array.isArray(d.transactions)) state.transactions=d.transactions;
         if(d.categories) state.categories={...DEFAULT_CATS,...d.categories};
         if(Array.isArray(d.persons)) state.persons=d.persons;
+        if(d.photoData){
+          localProfilePhoto=d.photoData;
+          try{ localStorage.setItem('hisabnikash_profile_photo',d.photoData); }catch(e){}
+          updateHeaderAvatar(); updateSettings();
+        }
         persistLocal(); renderAll();
         showToast('ডাটা সিঙ্ক হয়েছে ✓');
       } else {
@@ -3022,6 +3070,7 @@ window.__onAuthChange = async (user) => {
           categories:state.categories,
           persons:state.persons,
           profile:{name:user.displayName||'',email:user.email||'',photoURL:user.photoURL||''},
+          photoData:localProfilePhoto||null,
           createdAt:fb.serverTimestamp(),updatedAt:fb.serverTimestamp()
         });
       }
@@ -3047,8 +3096,9 @@ window.__onAuthChange = async (user) => {
 
 function updateHeaderAvatar(){
   const btn=$('profile-btn');
-  if(state.user&&state.user.photoURL){
-    btn.innerHTML=`<img src="${state.user.photoURL}" alt="">`;
+  const photo=getProfilePhoto();
+  if(photo){
+    btn.innerHTML=`<img src="${photo}" alt="">`;
   } else if(state.user){
     const initial=(state.user.displayName||state.user.email||'U').charAt(0).toUpperCase();
     btn.innerHTML=`<span style="font-weight:700;color:var(--income)">${initial}</span>`;
@@ -3058,17 +3108,17 @@ function updateHeaderAvatar(){
 }
 function updateSettings(){
   const u=state.user;
+  const photo=getProfilePhoto();
   if(u){
     $('settings-name').textContent=u.displayName||'ইউজার';
     $('settings-email').textContent=u.email||'';
     const av=$('settings-avatar');
-    av.innerHTML=u.photoURL?`<img src="${u.photoURL}" alt="">`:`<span style="font-weight:700;color:var(--income)">${(u.displayName||u.email||'U').charAt(0).toUpperCase()}</span>`;
+    av.innerHTML=photo?`<img src="${photo}" alt="">`:`<span style="font-weight:700;color:var(--income)">${(u.displayName||u.email||'U').charAt(0).toUpperCase()}</span>`;
     setSyncStatus('synced');
   } else {
     $('settings-name').textContent='গেস্ট ইউজার';
     $('settings-email').textContent='লগইন করতে চাপুন';
-    $('settings-avatar').innerHTML=`<svg class="icon"><use href="#i-user"/></svg>`;
-    $('settings-sync').textContent='অফলাইন মোড';
+    $('settings-avatar').innerHTML=photo?`<img src="${photo}" alt="">`:`<svg class="icon"><use href="#i-user"/></svg>`;
   }
 }
 
