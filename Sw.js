@@ -5,7 +5,7 @@ const CORE = [
   '/manifest.webmanifest',
   '/vendor/xlsx.full.min.js',
   '/icon/icon-1254.png',
-  '/icon/icon-1920.png',
+  '/icon/icon-512.png',
   '/favicon.ico',
 ];
 const RUNTIME = VERSION + '-runtime';
