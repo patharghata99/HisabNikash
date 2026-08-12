@@ -3,7 +3,7 @@
   "short_name": "হিসাবনিকাশ",
   "description": "আয়, ব্যয়, দেনা ও পাওনার সহজ হিসাব ।",
   "id": "/index.html",
-  "start_url": "/app.html",
+  "start_url": "/index.html",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait",
