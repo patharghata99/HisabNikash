@@ -1100,8 +1100,7 @@
     <button class="fm-back" onclick="closeTypeDetail()">
       <svg class="icon"><use href="#i-arrow-left"/></svg>
     </button>
-    <div class="fm-title" id="td-title">বিস্তারিত</div>
-    <button class="fm-back" onclick="exportTypeExcel()" title="Excel">
+    <div class="fm-title" id="td-title">বিস্তারিত</div>    <button class="fm-back" onclick="exportTypeExcel()" title="Excel">
       <svg class="icon icon-sm"><use href="#i-download"/></svg>
     </button>
   </div>
@@ -1114,7 +1113,6 @@
 <div class="toast" id="toast"></div>
 
 <!-- ===================== APP SCRIPT (Firebase + Logic) ===================== -->
-
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-app.js";
   import {
@@ -1136,48 +1134,54 @@
     appId: "1:611430042216:web:3337d43fa41514adb449dd"
   };
 
-  const app = initializeApp(firebaseConfig);
-  const auth = getAuth(app);
-  const db = getFirestore(app);
+  let app, auth, db, googleProvider;
+  let firebaseReady = false;
+  let unsubData = null;
+  let unsubPersons = null;
+  let unsubTransactions = null;
 
-  // ... তোমার বাকি লজিক
-
-
-let app, auth, db, googleProvider;
-let firebaseReady = false;
-let unsubData = null;
-let unsubPersons = null;
-let unsubTransactions = null;
-
-try {
-  if (firebaseConfig.apiKey && firebaseConfig.apiKey !== "AIzaSyCBNgWjrZ9Tl4saa5u_dwI4wR7IWmVB_Oo") {
-    app = initializeApp(firebaseConfig);
-    auth = getAuth(app);
-    db = getFirestore(app);
-    googleProvider = new GoogleAuthProvider();
-    firebaseReady = true;
-  } else {
-    console.warn("[হিসাবনিকাশ] Firebase config পেস্ট করা হয়নি — অফলাইন মোডে চলছে।");
+  try {
+    if (firebaseConfig.apiKey) {
+      app = initializeApp(firebaseConfig);
+      auth = getAuth(app);
+      db = getFirestore(app);
+      googleProvider = new GoogleAuthProvider();
+      firebaseReady = true;
+    } else {
+      console.warn("[হিসাবনিকাশ] Firebase config পেস্ট করা হয়নি — অফলাইন মোডে চলছে।");
+    }
+  } catch (e) {
+    console.error("Firebase init failed:", e);
   }
-} catch (e) {
-  console.error("Firebase init failed:", e);
-}
 
-window.__fb = {
-  auth, db, googleProvider, firebaseReady,
-  signInWithPopup, signInWithRedirect, getRedirectResult,
-  createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile, signOut,
-  doc, setDoc, getDoc, getDocs, addDoc, updateDoc, deleteDoc,
-  collection, query, orderBy, onSnapshot, serverTimestamp, writeBatch
-};
+  window.__fb = {
+    auth, db, googleProvider, firebaseReady,
+    signInWithPopup, signInWithRedirect, getRedirectResult,
+    createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile, signOut,
+    doc, setDoc, getDoc, getDocs, addDoc, updateDoc, deleteDoc,
+    collection, query, orderBy, onSnapshot, serverTimestamp, writeBatch
+  };
 
-if (firebaseReady) {
-  getRedirectResult(auth).catch(err => console.warn("Redirect signin:", err));
-  onAuthStateChanged(auth, (user) => {
-    window.__onAuthChange && window.__onAuthChange(user);
-  });
-}
+  if (firebaseReady) {
+    getRedirectResult(auth).catch(err => console.warn("Redirect signin:", err));
+    onAuthStateChanged(auth, (user) => {
+      window.__onAuthChange && window.__onAuthChange(user);
+    });
+  }
 </script>
+  
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-app.js";
+  import {
+    getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult,
+    createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile,
+    onAuthStateChanged, signOut
+  } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-auth.js";
+  import {
+    getFirestore, doc, setDoc, getDoc, getDocs, addDoc, updateDoc, deleteDoc,
+    collection, query, orderBy, onSnapshot, serverTimestamp, writeBatch
+  } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore.js";
+
 
 <script>
 /* ============================================================
