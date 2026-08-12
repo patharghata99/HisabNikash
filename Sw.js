@@ -67,7 +67,7 @@ self.addEventListener('fetch', (event) => {
     event.respondWith(
       networkFirst(req, VERSION).catch(async () => {
         const c = await caches.open(VERSION);
-        return (await c.match('/app.html')) || new Response('Offline', { status: 503 });
+        return (await c.match('/index.html')) || new Response('Offline', { status: 503 });
       }),
     );
     return;
