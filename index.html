@@ -360,6 +360,17 @@
   .toast.show{opacity:1}
   .toast.err{background:var(--expense);color:#fff}
 
+  /* Welcome popup */
+  .welcome-popup{position:fixed;inset:0;z-index:1200;display:flex;align-items:center;justify-content:center;background:rgba(6,10,22,.6);backdrop-filter:blur(3px);opacity:0;pointer-events:none;transition:opacity .25s}
+  .welcome-popup.show{opacity:1;pointer-events:auto}
+  .welcome-popup-card{background:linear-gradient(160deg,#1a2744 0%,#0f1a35 100%);border:1px solid #1e3060;border-radius:20px;padding:32px 28px;width:min(300px,84vw);text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.5),0 0 0 1px rgba(0,229,160,.08);transform:scale(.85) translateY(10px);transition:transform .3s cubic-bezier(.34,1.56,.64,1)}
+  .welcome-popup.show .welcome-popup-card{transform:scale(1) translateY(0)}
+  .welcome-popup-icon{width:56px;height:56px;margin:0 auto 16px;border-radius:50%;background:radial-gradient(circle,rgba(0,229,160,.18),rgba(0,229,160,.04));display:flex;align-items:center;justify-content:center;color:var(--income);border:1px solid rgba(0,229,160,.3)}
+  .welcome-popup-icon svg{width:28px;height:28px}
+  .welcome-popup-title{font-size:18px;font-weight:800;color:var(--text);margin-bottom:6px}
+  .welcome-popup-title span{color:var(--income)}
+  .welcome-popup-sub{font-size:13px;color:var(--text2);line-height:1.5}
+
   /* Loader splash */
   .splash{position:fixed;inset:0;background:var(--bg);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;transition:opacity .3s}
   .splash.hide{opacity:0;pointer-events:none}
@@ -1112,6 +1123,15 @@
 <!-- Toast -->
 <div class="toast" id="toast"></div>
 
+<!-- Welcome popup after login -->
+<div class="welcome-popup" id="welcome-popup" onclick="this.classList.remove('show')">
+  <div class="welcome-popup-card" onclick="event.stopPropagation()">
+    <div class="welcome-popup-icon"><svg class="icon"><use href="#i-check"/></svg></div>
+    <div class="welcome-popup-title">ধন্যবাদ, <span id="welcome-popup-name"></span>!</div>
+    <div class="welcome-popup-sub">সফলভাবে লগইন হয়েছে — হিসাবনিকাশে স্বাগতম</div>
+  </div>
+</div>
+
 <!-- ===================== APP SCRIPT (Firebase + Logic) ===================== -->
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-app.js";
@@ -1214,6 +1234,15 @@ function showToast(msg, isErr=false){
   clearTimeout(showToast._t); showToast._t=setTimeout(()=>t.classList.remove('show'),2400);
 }
 window.showToast = showToast;
+
+function showWelcomePopup(name){
+  $('welcome-popup-name').textContent=name||'ইউজার';
+  const el=$('welcome-popup');
+  el.classList.add('show');
+  clearTimeout(showWelcomePopup._t);
+  showWelcomePopup._t=setTimeout(()=>el.classList.remove('show'),2800);
+}
+window.showWelcomePopup=showWelcomePopup;
 
 /* ---------- Date / Time ---------- */
 function setToday(){
@@ -2925,6 +2954,7 @@ async function doEmailAuth(){
     } else {
       await fb.signInWithEmailAndPassword(fb.auth,email,pass);
     }
+    window.__justLoggedIn=true;
   }catch(e){setAuthMsg(humanErr(e.code||e.message))}
   finally{btn.disabled=false}
 }
@@ -2933,6 +2963,7 @@ async function doGoogleAuth(){
   try{
     const fb=window.__fb;
     await fb.signInWithPopup(fb.auth,fb.googleProvider);
+    window.__justLoggedIn=true;
   }catch(e){
     if(['auth/popup-blocked','auth/popup-closed-by-user','auth/operation-not-supported-in-this-environment'].includes(e.code)){
       try{await window.__fb.signInWithRedirect(window.__fb.auth,window.__fb.googleProvider);return}catch(e2){setAuthMsg(humanErr(e2.code))}
@@ -2968,6 +2999,10 @@ window.doGoogleAuth=doGoogleAuth; window.doLogout=doLogout;
 let unsubData=null;
 window.__onAuthChange = async (user) => {
   state.user=user;
+  if(user && window.__justLoggedIn){
+    window.__justLoggedIn=false;
+    showWelcomePopup(user.displayName||user.email||'ইউজার');
+  }
   if(user){
     updateHeaderAvatar(); updateSettings();
     try{
