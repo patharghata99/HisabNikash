@@ -4,18 +4,28 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="theme-color" content="#0f1117">
-<title>JAKARIA</title>
-<meta name="description" content="হিসাবনিকাশ — আয়, ব্যয়, দেনা ও পাওনার সহজ হিসাব,।">
+<title>হিসাবনিকাশ</title>
+<meta name="description" content="হিসাবনিকাশ — আয়, ব্যয়, দেনা ও পাওনার সহজ হিসাব। ইনস্টল করে অফলাইনেও ব্যবহার করুন।">
 <link rel="manifest" href="/manifest.webmanifest">
-<link rel="icon" href="/icon/icon-1254.png" type="image/png">
+<link rel="canonical" href="__ORIGIN__/">
+<link rel="icon" href="/icon/icon-192.png" type="image/png">
 <link rel="apple-touch-icon" href="/icon/icon-512.png">
 
-
+<meta property="og:site_name" content="হিসাবনিকাশ">
+<meta property="og:type" content="website">
 <meta property="og:title" content="হিসাব'নিকাশ">
 <meta property="og:description" content="হিসাবনিকাশ — আয়, ব্যয়, দেনা ও পাওনার সহজ হিসাব">
-<meta property="og:image" content="https://zakaria24.netlify.app/icon/preview.png">
-<meta property="og:url" content="https://zakaria24.netlify.app">
+<meta property="og:image" content="__ORIGIN__/icon/preview.png">
+<meta property="og:image:secure_url" content="__ORIGIN__/icon/preview.png">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:url" content="__ORIGIN__/">
 <meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="হিসাব'নিকাশ">
+<meta name="twitter:description" content="হিসাবনিকাশ — আয়, ব্যয়, দেনা ও পাওনার সহজ হিসাব">
+<meta name="twitter:image" content="__ORIGIN__/icon/preview.png">
+
 
   
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -3187,20 +3197,16 @@ document.addEventListener('DOMContentLoaded',boot);
 ================================================================ */
 (function registerSW(){
   if(!('serviceWorker' in navigator)) return;
-  const h=location.hostname;
   const inPreview = window.self!==window.top
-    || h.startsWith('id-preview--') || h.startsWith('preview--')
-    || /(^|\.)lovableproject\.com$/.test(h) || /(^|\.)lovableproject-dev\.com$/.test(h)
-    || /(^|\.)beta\.lovable\.dev$/.test(h)
     || new URLSearchParams(location.search).has('sw-off');
   if(inPreview){
     navigator.serviceWorker.getRegistrations().then(rs=>rs.forEach(r=>{
-      if(r.active&&/\/Sw\.js$/i.test(r.active.scriptURL)) r.unregister();
+      if(r.active&&/\/sw\.js$/.test(r.active.scriptURL)) r.unregister();
     }));
     return;
   }
   window.addEventListener('load',()=>{
-    navigator.serviceWorker.register('/Sw.js').then(reg=>{
+    navigator.serviceWorker.register('/sw.js').then(reg=>{
       reg.addEventListener('updatefound',()=>{
         const nw=reg.installing;
         if(nw) nw.addEventListener('statechange',()=>{
@@ -3260,30 +3266,75 @@ document.addEventListener('DOMContentLoaded',boot);
   from { opacity: 0; transform: scale(0.9); }
   to { opacity: 1; transform: scale(1); }
 }
+.install-btn{
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: calc(84px + env(safe-area-inset-bottom));
+  z-index: 9999;
+}
+.install-btn:hover{ transform: translateX(-50%) translateY(-2px); }
+.install-btn:active{ transform: translateX(-50%) scale(0.97); }
+.install-hint{
+  position: fixed; left: 50%; transform: translateX(-50%);
+  bottom: calc(140px + env(safe-area-inset-bottom));
+  z-index: 9999; max-width: 320px; display: none;
+  background: #1a1d27; color: #e8eaf0; border: 1px solid #2e3350;
+  border-radius: 12px; padding: 12px 14px; font-size: 14px; line-height: 1.6;
+  box-shadow: 0 10px 30px rgba(0,0,0,.45);
+}
 </style>
 
+<div id="installHint" class="install-hint"></div>
+
 <script>
-let deferredPrompt;
-const installBtn = document.getElementById('installBtn');
+(function () {
+  let deferredPrompt = null;
+  const installBtn = document.getElementById('installBtn');
+  const hint = document.getElementById('installHint');
 
-window.addEventListener('beforeinstallprompt', (e) => {
-  e.preventDefault();
-  deferredPrompt = e;
-  installBtn.style.display = 'flex';
-});
+  const isStandalone = () =>
+    window.matchMedia('(display-mode: standalone)').matches ||
+    window.navigator.standalone === true;
 
-installBtn.addEventListener('click', async () => {
-  if (!deferredPrompt) return;
-  deferredPrompt.prompt();
-  const { outcome } = await deferredPrompt.userChoice;
-  deferredPrompt = null;
-  installBtn.style.display = 'none';
-});
+  const showHint = (html) => {
+    hint.innerHTML = html;
+    hint.style.display = 'block';
+    setTimeout(() => { hint.style.display = 'none'; }, 8000);
+  };
 
-window.addEventListener('appinstalled', () => {
-  installBtn.style.display = 'none';
-});
+  const show = () => { if (!isStandalone()) installBtn.style.display = 'flex'; };
+
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    show();
+  });
+
+  installBtn.addEventListener('click', async () => {
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      await deferredPrompt.userChoice;
+      deferredPrompt = null;
+      installBtn.style.display = 'none';
+      return;
+    }
+    const ua = navigator.userAgent;
+    const isIOS = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    if (isIOS) {
+      showHint('iPhone/iPad-এ ইনস্টল করতে: Safari-তে নিচের <b>Share</b> বাটনে চাপুন → <b>Add to Home Screen</b> নির্বাচন করুন।');
+    } else {
+      showHint('ইনস্টল করতে: ব্রাউজারের মেনু (⋮) খুলুন → <b>Install app</b> / <b>অ্যাপ ইনস্টল করুন</b> নির্বাচন করুন।');
+    }
+  });
+
+  window.addEventListener('appinstalled', () => { installBtn.style.display = 'none'; });
+
+  // ব্রাউজার beforeinstallprompt না দিলেও (iOS/Firefox) বাটন দেখানো হবে
+  window.addEventListener('load', () => { setTimeout(show, 2500); });
+})();
 </script>
+
   
 </body>
 </html>
