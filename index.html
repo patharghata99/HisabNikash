@@ -3195,12 +3195,12 @@ document.addEventListener('DOMContentLoaded',boot);
     || new URLSearchParams(location.search).has('sw-off');
   if(inPreview){
     navigator.serviceWorker.getRegistrations().then(rs=>rs.forEach(r=>{
-      if(r.active&&/\/sw\.js$/.test(r.active.scriptURL)) r.unregister();
+      if(r.active&&/\/Sw\.js$/i.test(r.active.scriptURL)) r.unregister();
     }));
     return;
   }
   window.addEventListener('load',()=>{
-    navigator.serviceWorker.register('/sw.js').then(reg=>{
+    navigator.serviceWorker.register('/Sw.js').then(reg=>{
       reg.addEventListener('updatefound',()=>{
         const nw=reg.installing;
         if(nw) nw.addEventListener('statechange',()=>{
