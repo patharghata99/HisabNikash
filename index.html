@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="theme-color" content="#0f1117">
-<title>হিসাবনিকাশ</title>
+<title>হিসাব'নিকাশ</title>
 <meta name="description" content="হিসাবনিকাশ — আয়, ব্যয়, দেনা ও পাওনার সহজ হিসাব। ইনস্টল করে অফলাইনেও ব্যবহার করুন।">
 <link rel="manifest" href="/manifest.webmanifest">
 <link rel="canonical" href="https://zakaria24.netlify.app/">
@@ -847,6 +847,26 @@
         <svg class="icon icon-sm" style="color:var(--text2)"><use href="#i-edit"/></svg>
       </div>
     </div>
+    <div class="cat-group">
+      <div class="cat-group-title">অ্যাপ ছড়িয়ে দিন</div>
+      <div class="cat-item" onclick="inviteApp()" style="cursor:pointer">
+        <div class="profile-avatar" style="width:42px;height:42px;border-width:1px"><svg class="icon"><use href="#i-person"/></svg></div>
+        <div class="cat-info">
+          <div class="cat-name">ইনভাইট করুন</div>
+          <div class="cat-count">বন্ধুদের হিসাবনিকাশ ব্যবহার করতে আমন্ত্রণ জানান</div>
+        </div>
+        <svg class="icon icon-sm" style="color:var(--text2)"><use href="#i-plus"/></svg>
+      </div>
+      <div class="cat-item" onclick="shareApp()" style="cursor:pointer">
+        <div class="profile-avatar" style="width:42px;height:42px;border-width:1px"><svg class="icon"><use href="#i-grid"/></svg></div>
+        <div class="cat-info">
+          <div class="cat-name">শেয়ার করুন</div>
+          <div class="cat-count">অ্যাপের লিংক শেয়ার বা কপি করুন</div>
+        </div>
+        <svg class="icon icon-sm" style="color:var(--text2)"><use href="#i-edit"/></svg>
+      </div>
+    </div>
+
     <div class="cat-group">
       <div class="cat-group-title">ডাটা ম্যানেজমেন্ট</div>
       <input type="file" id="import-file" accept=".json" style="display:none" onchange="importJSON(event)">
@@ -2755,34 +2775,52 @@ function safeSheetName(n){ return (n||'Sheet').substring(0,28).replace(/[:\\\/\?
 function reportSheetAOA(txns,signName){
   const list=sortByDate(txns);
   const tt=reportTotals(list);
-  const aoa=[
-    [BRAND,'','','',''],
-    [signName||'সম্পূর্ণ হিসাব','','','',''],
-    ['হিসাবকাল',dateRange(list),'','',''],
-    [],
-    ['মোট আয় (৳)',tt.income,'','মোট ব্যয় (৳)',tt.expense],
-    ['দেনা (৳)',tt.debt,'','পাওনা (৳)',tt.due],
-    ['মোট ব্যালেন্স (৳)',tt.balance,'','স্ট্যাটাস',tt.balance>=0?'স্বচ্ছ':'ঘাটতি'],
-    [],
-    ['লেনদেনের বিবরণ'],
-    ['ক্রমিক','তারিখ','ধরন','নাম','পরিমাণ (৳)'],
-    ...list.map((t,i)=>[i+1,t.date||'',TYPE_LABELS[t.type],
-      (t.name||[t.note,t.category].filter(Boolean)[0]||TYPE_LABELS[t.type])+((t.type==='debt'||t.type==='due')?(isPaidTxn(t)?' (পরিশোধ)':' (বাকি)'):''),
-      +t.amount||0]),
-    ['','','','মোট',list.reduce((s,t)=>s+(+t.amount||0),0)],
-    [],
-    ['মাসিক রিপোর্ট'],
-    ['আয় (৳)',tt.income],
-    ['ব্যয় (৳)',tt.expense],
-    ['সঞ্চয় (৳)',tt.saving],
-    ['দেনা (৳)',tt.debt],
-    ['পাওনা (৳)',tt.due]
+  const period=dateRange(list);
+  const money='#,##0;(#,##0);"-"';
+  const title=`${BRAND} — ${signName||'সম্পূর্ণ হিসাব'} (${period})`;
+  const rows=[];
+  rows.push([title,'','','','','']);                 // 0
+  rows.push(['','','','','','']);                    // 1
+  rows.push(['ক্রমিক','তারিখ','ধরন','বিবরণ','পরিমাণ (৳)','স্ট্যাটাস']); // 2
+  const firstData=rows.length;
+  list.forEach((t,i)=>{
+    const paid=(t.type==='debt'||t.type==='due')?(isPaidTxn(t)?'পরিশোধ':'বাকি'):'সম্পন্ন';
+    const amt=(+t.amount||0)*(t.type==='expense'?-1:1);
+    rows.push([i+1,t.date||'',TYPE_LABELS[t.type],
+      (t.name||[t.note,t.category].filter(Boolean)[0]||TYPE_LABELS[t.type]),
+      amt,paid]);
+  });
+  const lastData=rows.length-1;
+  rows.push(['','','','সর্বমোট লেনদেন',list.reduce((s,t)=>s+(+t.amount||0),0),'']);
+  const totalRow=rows.length-1;
+  rows.push(['','','','','','']);
+  const blockHead=rows.length;
+  rows.push(['দেনা/পাওনা বন্টন','','','মাসিক সঞ্চয়','','']);
+  rows.push(['দেনা',tt.debt,'','আয়',tt.income,'']);
+  rows.push(['পাওনা',tt.due,'','ব্যয়',tt.expense,'']);
+  rows.push(['মোট',(+tt.debt||0)+(+tt.due||0),'','সঞ্চয়',tt.saving,'']);
+  const blockEnd=rows.length-1;
+  rows.push(['','','','','','']);
+  rows.push([`তৈরি হয়েছে: ${new Date().toLocaleString('bn-BD')}`,'','','','',signName||BRAND]);
+  rows.push([`হিসাবকাল: ${period}`,'','','','','']);
+  rows.push([`অ্যাপ্লিকেশন: ${BRAND}`,'','','','','']);
+
+  const ws=XLSX.utils.aoa_to_sheet(rows);
+  ws['!cols']=[{wch:10},{wch:16},{wch:12},{wch:36},{wch:16},{wch:14}];
+  ws['!merges']=[
+    {s:{r:0,c:0},e:{r:0,c:5}},
+    {s:{r:blockHead,c:0},e:{r:blockHead,c:1}},
+    {s:{r:blockHead,c:3},e:{r:blockHead,c:4}},
   ];
-  const ws=XLSX.utils.aoa_to_sheet(aoa);
-  ws['!cols']=[{wch:12},{wch:16},{wch:12},{wch:34},{wch:16}];
-  ws['!merges']=[{s:{r:0,c:0},e:{r:0,c:4}},{s:{r:1,c:0},e:{r:1,c:4}}];
+  ws['!rows']=[{hpt:26}];
+  const setNum=(r,c)=>{ const a=XLSX.utils.encode_cell({r,c}); if(ws[a]&&ws[a].t==='n') ws[a].z=money; };
+  for(let r=firstData;r<=totalRow;r++) setNum(r,4);
+  for(let r=blockHead+1;r<=blockEnd;r++){ setNum(r,1); setNum(r,4); }
+  ws['!autofilter']={ref:XLSX.utils.encode_range({s:{r:2,c:0},e:{r:Math.max(lastData,2),c:5}})};
+  ws['!freeze']={xSplit:0,ySplit:3};
   return ws;
 }
+
 function downloadWorkbook(wb,fname){
   try{ XLSX.writeFile(wb,fname); showToast('Excel ডাউনলোড হচ্ছে ✓'); }
   catch(e){ console.error(e); showToast('Excel তৈরিতে সমস্যা',true); }
@@ -3178,6 +3216,59 @@ function clearAll(){
 window.exportJSON=exportJSON; window.importJSON=importJSON; window.clearAll=clearAll;
 
 /* ================================================================
+   INVITE / SHARE
+================================================================ */
+const APP_TITLE = "হিসাব'নিকাশ";
+const APP_TAGLINE = 'আয়, ব্যয়, দেনা ও পাওনার সহজ হিসাব';
+
+function appLink(){
+  try{
+    const u = new URL(location.href);
+    u.hash=''; u.search=''; 
+    return u.origin + (u.pathname.endsWith('/')? u.pathname : u.pathname.replace(/[^/]*$/,''));
+  }catch(e){ return location.href; }
+}
+
+async function copyText(txt){
+  try{
+    if(navigator.clipboard && window.isSecureContext){ await navigator.clipboard.writeText(txt); return true; }
+  }catch(e){}
+  try{
+    const ta=document.createElement('textarea');
+    ta.value=txt; ta.setAttribute('readonly','');
+    ta.style.cssText='position:fixed;top:-1000px;opacity:0';
+    document.body.appendChild(ta); ta.select(); ta.setSelectionRange(0,ta.value.length);
+    const ok=document.execCommand('copy'); ta.remove(); return ok;
+  }catch(e){ return false; }
+}
+
+async function nativeShare(title, text, url){
+  if(navigator.share){
+    try{ await navigator.share({title, text, url}); return true; }
+    catch(err){ if(err && err.name==='AbortError') return true; }
+  }
+  return false;
+}
+
+async function inviteApp(){
+  const url = appLink();
+  const text = `${APP_TITLE} — ${APP_TAGLINE}।\nআমি এই অ্যাপে আমার আয়-ব্যয়ের হিসাব রাখি। তুমিও ব্যবহার করে দেখো 👇\n${url}`;
+  if(await nativeShare(APP_TITLE, text, url)) return;
+  if(await copyText(text)) showToast('আমন্ত্রণ বার্তা কপি হয়েছে ✓');
+  else showToast('কপি করা যায়নি',true);
+}
+
+async function shareApp(){
+  const url = appLink();
+  const text = `${APP_TITLE} — ${APP_TAGLINE}`;
+  if(await nativeShare(APP_TITLE, text, url)) return;
+  if(await copyText(url)) showToast('লিংক কপি হয়েছে ✓');
+  else showToast('কপি করা যায়নি',true);
+}
+
+window.inviteApp=inviteApp; window.shareApp=shareApp; window.copyText=copyText;
+
+/* ================================================================
    BOOT
 ================================================================ */
 function boot(){
@@ -3197,7 +3288,11 @@ document.addEventListener('DOMContentLoaded',boot);
 ================================================================ */
 (function registerSW(){
   if(!('serviceWorker' in navigator)) return;
+  const h=location.hostname;
   const inPreview = window.self!==window.top
+    || h.startsWith('id-preview--') || h.startsWith('preview--')
+    || /(^|\.)lovableproject\.com$/.test(h) || /(^|\.)lovableproject-dev\.com$/.test(h)
+    || /(^|\.)beta\.lovable\.dev$/.test(h)
     || new URLSearchParams(location.search).has('sw-off');
   if(inPreview){
     navigator.serviceWorker.getRegistrations().then(rs=>rs.forEach(r=>{
@@ -3303,8 +3398,14 @@ document.addEventListener('DOMContentLoaded',boot);
     setTimeout(() => { hint.style.display = 'none'; }, 8000);
   };
 
-  const show = () => { if (!isStandalone()) installBtn.style.display = 'flex'; };
+  const isIOS = () =>
+    /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 
+  const show = () => { if (!isStandalone()) installBtn.style.display = 'flex'; };
+  const hide = () => { installBtn.style.display = 'none'; };
+
+  // ইনস্টল প্রম্পট পাওয়া গেলে তবেই বাটন দেখানো হবে → ক্লিকে সরাসরি ইনস্টল শুরু
   window.addEventListener('beforeinstallprompt', (e) => {
     e.preventDefault();
     deferredPrompt = e;
@@ -3313,27 +3414,31 @@ document.addEventListener('DOMContentLoaded',boot);
 
   installBtn.addEventListener('click', async () => {
     if (deferredPrompt) {
-      deferredPrompt.prompt();
-      await deferredPrompt.userChoice;
+      const p = deferredPrompt;
       deferredPrompt = null;
-      installBtn.style.display = 'none';
+      p.prompt();
+      const res = await p.userChoice.catch(() => null);
+      if (res && res.outcome === 'accepted') hide();
+      else deferredPrompt = p;
       return;
     }
-    const ua = navigator.userAgent;
-    const isIOS = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-    if (isIOS) {
+    // শুধুমাত্র iOS Safari-তে (যেখানে অটো-ইনস্টল সাপোর্ট নেই) নির্দেশনা
+    if (isIOS()) {
       showHint('iPhone/iPad-এ ইনস্টল করতে: Safari-তে নিচের <b>Share</b> বাটনে চাপুন → <b>Add to Home Screen</b> নির্বাচন করুন।');
     } else {
-      showHint('ইনস্টল করতে: ব্রাউজারের মেনু (⋮) খুলুন → <b>Install app</b> / <b>অ্যাপ ইনস্টল করুন</b> নির্বাচন করুন।');
+      hide();
     }
   });
 
-  window.addEventListener('appinstalled', () => { installBtn.style.display = 'none'; });
+  window.addEventListener('appinstalled', () => { deferredPrompt = null; hide(); });
 
-  // ব্রাউজার beforeinstallprompt না দিলেও (iOS/Firefox) বাটন দেখানো হবে
-  window.addEventListener('load', () => { setTimeout(show, 2500); });
+  // iOS-এ beforeinstallprompt নেই — সেখানে বাটন দেখানো হবে
+  window.addEventListener('load', () => {
+    setTimeout(() => { if (isIOS()) show(); }, 2500);
+  });
 })();
 </script>
+
 
   
 </body>
