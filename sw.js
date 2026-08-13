@@ -1,5 +1,5 @@
 /* হিসাবনিকাশ — অফলাইন সার্ভিস ওয়ার্কার */
-const VERSION = 'hn-v3';
+const VERSION = 'hn-v4';
 const CORE = [
   '/',
   '/manifest.webmanifest',
