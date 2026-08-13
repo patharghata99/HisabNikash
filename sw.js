@@ -1,12 +1,13 @@
 /* হিসাবনিকাশ — অফলাইন সার্ভিস ওয়ার্কার */
-const VERSION = 'hn-v2';
+const VERSION = 'hn-v3';
 const CORE = [
-  '/index.html',
+  '/',
   '/manifest.webmanifest',
   '/vendor/xlsx.full.min.js',
   '/icon/icon-1254.png',
   '/icon/icon-512.png',
-  '/favicon.ico',
+  '/icon/icon-192.png',
+  '/favicon.png',
 ];
 const RUNTIME = VERSION + '-runtime';
 
@@ -67,7 +68,7 @@ self.addEventListener('fetch', (event) => {
     event.respondWith(
       networkFirst(req, VERSION).catch(async () => {
         const c = await caches.open(VERSION);
-        return (await c.match('/index.html')) || new Response('Offline', { status: 503 });
+        return (await c.match('/')) || new Response('Offline', { status: 503 });
       }),
     );
     return;
